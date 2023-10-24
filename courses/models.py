@@ -15,8 +15,7 @@ class Course(models.Model):
     description = models.TextField(verbose_name='Описание', **NULLABLE)
     picture = models.ImageField(upload_to='course/', verbose_name='Изображение', **NULLABLE)
 
-
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Пользователь', **NULLABLE )
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Пользователь', **NULLABLE)
 
     def __str__(self):
         return f'{self.title}'
@@ -32,7 +31,7 @@ class Lesson(models.Model):
     image = models.ImageField(upload_to='lesson/', verbose_name='Изображение', **NULLABLE)
     url = models.URLField(max_length=250, verbose_name='ссылка', **NULLABLE)
 
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='Урок', **NULLABLE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='Урок', **NULLABLE, related_name='lesson')
 
     def __str__(self):
         return f'{self.title}'
@@ -43,7 +42,7 @@ class Lesson(models.Model):
 
 
 class Payments(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь', **NULLABLE )
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь', **NULLABLE, related_name='payment')
     date_payment = models.DateField(verbose_name='Дата оплаты', **NULLABLE)
     course = models.ForeignKey(Course, on_delete=models.CASCADE, **NULLABLE)
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE, **NULLABLE)
@@ -56,5 +55,3 @@ class Payments(models.Model):
     class Meta:
         verbose_name = 'платеж'
         verbose_name_plural = 'платежи'
-
-
