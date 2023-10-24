@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'users',
     'courses',
 
+    'django_filters',
+
 ]
 
 MIDDLEWARE = [
