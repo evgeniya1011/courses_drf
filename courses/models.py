@@ -32,6 +32,8 @@ class Lesson(models.Model):
     url = models.URLField(max_length=250, verbose_name='ссылка', **NULLABLE)
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='Урок', **NULLABLE, related_name='lesson')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Пользователь',
+                              **NULLABLE)
 
     def __str__(self):
         return f'{self.title}'
