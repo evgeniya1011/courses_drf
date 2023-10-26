@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'courses',
 
     'django_filters',
+    'rest_framework_simplejwt',
 
 ]
 
@@ -147,4 +148,10 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 LOGIN_URL = '/users/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    )
+}
 
