@@ -111,13 +111,3 @@ class SubscriptionDestroyAPIView(generics.DestroyAPIView):
     serializer_class = SubscriptionSerializer
     queryset = Subscription.objects.all()
     permission_classes = [IsAuthenticated]
-
-    def perform_destroy(self, instance):
-        instance.is_active = False
-        instance.save()
-
-
-
-
-
-
