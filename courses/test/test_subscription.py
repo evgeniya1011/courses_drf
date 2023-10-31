@@ -59,4 +59,4 @@ class SubscriptionTestCase(APITestCase):
             response.status_code,
             status.HTTP_204_NO_CONTENT
         )
-        self.assertTrue(Subscription.objects.all().filter(is_active=False))
+        self.assertFalse(Subscription.objects.all().exists())
