@@ -15,7 +15,7 @@ class Course(models.Model):
     description = models.TextField(verbose_name='Описание', **NULLABLE)
     picture = models.ImageField(upload_to='course/', verbose_name='Изображение', **NULLABLE)
 
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Пользователь', **NULLABLE)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь', **NULLABLE)
 
     def __str__(self):
         return f'{self.title}'
@@ -32,7 +32,7 @@ class Lesson(models.Model):
     url = models.URLField(max_length=250, verbose_name='ссылка', **NULLABLE)
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='Урок', **NULLABLE, related_name='lesson')
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, verbose_name='Пользователь',
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь',
                               **NULLABLE)
 
     def __str__(self):
@@ -57,3 +57,17 @@ class Payments(models.Model):
     class Meta:
         verbose_name = 'платеж'
         verbose_name_plural = 'платежи'
+
+
+class Subscription(models.Model):
+    is_active = models.BooleanField(default=True, verbose_name='Подписка')
+
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, **NULLABLE, related_name='subscription')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь', **NULLABLE)
+
+    def __str__(self):
+        return f'{self.course} - {self.is_active}'
+
+    class Meta:
+        verbose_name = 'подписка'
+        verbose_name_plural = 'подписки'
