@@ -1,7 +1,7 @@
+from django.conf import settings
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from rest_framework import viewsets, generics, status
-from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -11,9 +11,11 @@ from courses.serializers import CourseSerializers, LessonSerializers, PaymentsSe
     SubscriptionSerializer
 from courses.services import send_message_active
 from users.permissions import IsModerator, IsNotModerator, IsOwner
+import stripe
 
 
 class CourseViewSet(viewsets.ModelViewSet):
+    """ Создание, просмотр, обновление и удаление курса"""
     serializer_class = CourseSerializers
     queryset = Course.objects.all().order_by('pk')
     permission_classes = [IsAuthenticated, IsModerator]
@@ -55,6 +57,7 @@ class CourseViewSet(viewsets.ModelViewSet):
 
 
 class LessonCreateView(generics.CreateAPIView):
+    """Создание урока"""
     serializer_class = LessonSerializers
     permission_classes = [IsAuthenticated, IsNotModerator]
 
@@ -65,18 +68,21 @@ class LessonCreateView(generics.CreateAPIView):
 
 
 class LessonRetrieveView(generics.RetrieveAPIView):
+    """ Просмотр информации по уроку"""
     serializer_class = LessonSerializers
     queryset = Lesson.objects.all()
     permission_classes = [IsAuthenticated, IsModerator | IsOwner]
 
 
 class LessonUpdateView(generics.UpdateAPIView):
+    """ Обновление урока"""
     serializer_class = LessonSerializers
     queryset = Lesson.objects.all()
     permission_classes = [IsAuthenticated, IsModerator | IsOwner]
 
 
 class LessonListView(generics.ListAPIView):
+    """ Просмотр всех уроков"""
     serializer_class = LessonSerializers
     queryset = Lesson.objects.all().order_by('pk')
     permission_classes = [IsAuthenticated, IsModerator | IsOwner]
@@ -84,12 +90,14 @@ class LessonListView(generics.ListAPIView):
 
 
 class LessonDestroyView(generics.DestroyAPIView):
+    """ Удаление урока """
     serializer_class = LessonSerializers
     queryset = Lesson.objects.all()
     permission_classes = [IsAuthenticated, IsNotModerator | IsOwner]
 
 
 class PaymentsListAPIView(generics.ListAPIView):
+    """ Просмотр всех платежей"""
     serializer_class = PaymentsSerializer
     queryset = Payments.objects.all()
     filter_backends = [DjangoFilterBackend, OrderingFilter]
@@ -97,7 +105,56 @@ class PaymentsListAPIView(generics.ListAPIView):
     ordering_fields = ('date_payment',)
 
 
+class PaymentsCreateAPIView(generics.CreateAPIView):
+    serializer_class = PaymentsSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = PaymentsSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        new_payment = serializer.save()
+        new_payment.user = self.request.user
+        new_payment.save()
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        starter_subscription = stripe.Product.create(
+            name=new_payment.course.title,
+            description=new_payment.course.description,
+        )
+
+        starter_subscription_price = stripe.Price.create(
+            unit_amount=new_payment.amount,
+            currency="rub",
+            recurring={"interval": "month"},
+            product=starter_subscription['id'],
+        )
+
+        payment_session = stripe.checkout.Session.create(
+            success_url="http://127.0.0.1:8000/success",
+            cancel_url="http://127.0.0.1:8000/cancel",
+            line_items=[
+                {
+                    "price": starter_subscription_price.id,
+                    "quantity": 1,
+                },
+            ],
+            mode="subscription",
+        )
+        return Response(payment_session)
+
+
+class PaymentsRetrieveAPIView(generics.CreateAPIView):
+    serializer_class = PaymentsSerializer
+
+    def get(self, request, payment_id):
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        payment = stripe.checkout.Session.retrieve(payment_id)
+        detail_payment = {
+            'status': payment['payment_status']
+        }
+        return Response(detail_payment)
+
+
 class SubscriptionCreateAPIView(generics.CreateAPIView):
+    """ Создание подписки """
     serializer_class = SubscriptionSerializer
     permission_classes = [IsAuthenticated]
 
@@ -108,6 +165,7 @@ class SubscriptionCreateAPIView(generics.CreateAPIView):
 
 
 class SubscriptionDestroyAPIView(generics.DestroyAPIView):
+    """ Удаление подписки """
     serializer_class = SubscriptionSerializer
     queryset = Subscription.objects.all()
     permission_classes = [IsAuthenticated]

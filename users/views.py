@@ -23,4 +23,3 @@ class UserProfileListView(generics.ListAPIView):
     serializer_class = UserListSerializers
     queryset = User.objects.all()
     permission_classes = [IsAuthenticated]
-
