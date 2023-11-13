@@ -10,6 +10,7 @@ from courses.paginators import CoursesPaginator
 from courses.serializers import CourseSerializers, LessonSerializers, PaymentsSerializer, CourseCreateSerializers, \
     SubscriptionSerializer
 from courses.services import send_message_active
+from courses.task import send_message_update
 from users.permissions import IsModerator, IsNotModerator, IsOwner
 import stripe
 
@@ -43,11 +44,18 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
 
-        user = self.request.user
-        subscription = Subscription.objects.filter(user=user, course=course, is_active=True)
-        if subscription:
-            send_message_active(user.email, course.title)
-        return Response(serializer.data)
+        send_message_update.delay(course)
+        return Response(CourseSerializers(course).data)
+
+        # user = self.request.user
+        # subscription = Subscription.objects.filter(user=user, course=course, is_active=True)
+        # subscription = Subscription.objects.filter(course=course, is_active=True)
+        # if subscription:
+        #     for user in subscription.user.all():
+        #     # recepients = [client.email for client in mailling_item.client.all()]
+        #         send_message_update.delay(user.email, course.title)
+        #     # send_message_active(user.email, course.title)
+
 
     def get(self, request):
         queryset = Course.objects.all()
@@ -121,7 +129,7 @@ class PaymentsCreateAPIView(generics.CreateAPIView):
         )
 
         starter_subscription_price = stripe.Price.create(
-            unit_amount=new_payment.amount,
+            unit_amount=new_payment.amount*100,
             currency="rub",
             recurring={"interval": "month"},
             product=starter_subscription['id'],
@@ -162,6 +170,7 @@ class SubscriptionCreateAPIView(generics.CreateAPIView):
         new_sub = serializer.save()
         new_sub.user = self.request.user
         new_sub.save()
+        send_message_active(new_sub.user.email, new_sub.course.title)
 
 
 class SubscriptionDestroyAPIView(generics.DestroyAPIView):
