@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework_simplejwt',
 
+    'django_celery_beat'
+
 ]
 
 MIDDLEWARE = [
@@ -164,3 +166,15 @@ EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+
+# CACHE_ENABLED = os.getenv('CACHE_ENABLED') == 'True'
+# if CACHE_ENABLED:
+#     CACHES = {
+#         "default": {
+#             "BACKEND": "django.core.cache.backends.redis.RedisCache",
+#             "LOCATION": os.getenv('CACHE_LOCATION'),
+#         }
+#     }
