@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 import os
+from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -121,7 +122,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
 
@@ -170,11 +171,9 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
 
-# CACHE_ENABLED = os.getenv('CACHE_ENABLED') == 'True'
-# if CACHE_ENABLED:
-#     CACHES = {
-#         "default": {
-#             "BACKEND": "django.core.cache.backends.redis.RedisCache",
-#             "LOCATION": os.getenv('CACHE_LOCATION'),
-#         }
-#     }
+CELERY_BEAT_SCHEDULE = {
+    'user_block': {
+        'task': 'users.tasks.user_block',
+        'schedule': timedelta(days=1),
+    },
+}
