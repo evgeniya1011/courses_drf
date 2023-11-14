@@ -32,6 +32,7 @@ class Lesson(models.Model):
     description = models.TextField(verbose_name='Описание', **NULLABLE)
     image = models.ImageField(upload_to='lesson/', verbose_name='Изображение', **NULLABLE)
     url = models.URLField(max_length=250, verbose_name='ссылка', **NULLABLE)
+    date_update = models.DateTimeField(verbose_name='Дата и время последнего обновления рассылки', **NULLABLE)
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, verbose_name='Урок', **NULLABLE, related_name='lesson')
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name='Пользователь',
