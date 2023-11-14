@@ -10,7 +10,7 @@ from courses.paginators import CoursesPaginator
 from courses.serializers import CourseSerializers, LessonSerializers, PaymentsSerializer, CourseCreateSerializers, \
     SubscriptionSerializer
 from courses.services import send_message_active
-from courses.task import send_message_update
+from courses.tasks import send_course_update, send_lesson_update
 from users.permissions import IsModerator, IsNotModerator, IsOwner
 import stripe
 
@@ -43,19 +43,8 @@ class CourseViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(course, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
-
-        send_message_update.delay(course)
+        send_course_update.delay(course.pk)
         return Response(CourseSerializers(course).data)
-
-        # user = self.request.user
-        # subscription = Subscription.objects.filter(user=user, course=course, is_active=True)
-        # subscription = Subscription.objects.filter(course=course, is_active=True)
-        # if subscription:
-        #     for user in subscription.user.all():
-        #     # recepients = [client.email for client in mailling_item.client.all()]
-        #         send_message_update.delay(user.email, course.title)
-        #     # send_message_active(user.email, course.title)
-
 
     def get(self, request):
         queryset = Course.objects.all()
@@ -87,6 +76,11 @@ class LessonUpdateView(generics.UpdateAPIView):
     serializer_class = LessonSerializers
     queryset = Lesson.objects.all()
     permission_classes = [IsAuthenticated, IsModerator | IsOwner]
+
+    def perform_update(self, serializer):
+        """Отправление обновления об уроках"""
+        update_lesson = serializer.save()
+        send_lesson_update.delay(update_lesson.course_id, update_lesson.pk)
 
 
 class LessonListView(generics.ListAPIView):
